@@ -54,11 +54,13 @@
     </section>
 
     <script>
-const API_URL = "/api/repartidores";
+    // URL base que coincide con el prefijo en server.js
+    const API_URL = "/api/repartidores";
+
     function getFormData() {
         return {
-            id_repartidor: document.getElementById('id_repartidor').value,
-            id_pizzeria: document.getElementById('id_pizzeria').value,
+            // El ID no se envía en el body para registros nuevos (es AI)
+            id_pizzeria: document.getElementById('id_pizzeria').value || 1,
             nombre: document.getElementById('nombre').value,
             apellidos: document.getElementById('apellidos').value,
             tel: document.getElementById('tel').value,
@@ -69,13 +71,15 @@ const API_URL = "/api/repartidores";
     async function registrar() {
         const data = getFormData();
         try {
-            const res = await fetch(`${API_URL}/repartidores`, {
+            // CORRECCIÓN: Usar API_URL directamente para POST
+            const res = await fetch(API_URL, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data)
             });
             const result = await res.json();
-            alert(result.message || "Error al registrar");
+            alert(result.message || "Operación realizada");
+            if(res.ok) limpiar();
         } catch (err) { alert("Error de conexión"); }
     }
 
@@ -83,29 +87,36 @@ const API_URL = "/api/repartidores";
         const id = document.getElementById('id_repartidor').value;
         if(!id) return alert("Ingresa el ID para buscar");
         try {
-            const res = await fetch(`${API_URL}/repartidores/${id}`);
+            // CORRECCIÓN: La ruta final debe ser /api/repartidores/:id
+            const res = await fetch(`${API_URL}/${id}`);
             const d = await res.json();
-            if(d) {
+            
+            if(res.ok && d) {
                 document.getElementById('id_pizzeria').value = d.id_pizzeria;
                 document.getElementById('nombre').value = d.nombre;
                 document.getElementById('apellidos').value = d.apellidos;
                 document.getElementById('tel').value = d.tel;
                 document.getElementById('sueldo').value = d.sueldo;
-            } else { alert("Repartidor no encontrado"); }
+            } else { 
+                alert("Repartidor no encontrado"); 
+            }
         } catch (err) { alert("Error al consultar"); }
     }
 
     async function modificar() {
         const id = document.getElementById('id_repartidor').value;
+        if(!id) return alert("ID necesario para modificar");
+        
         const data = getFormData();
         try {
-            const res = await fetch(`${API_URL}/repartidores/${id}`, {
+            // CORRECCIÓN: Ruta /api/repartidores/:id con método PUT
+            const res = await fetch(`${API_URL}/${id}`, {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data)
             });
             const result = await res.json();
-            alert(result.message);
+            alert(result.message || "Datos actualizados");
         } catch (err) { alert("Error al modificar"); }
     }
 
@@ -113,10 +124,12 @@ const API_URL = "/api/repartidores";
         const id = document.getElementById('id_repartidor').value;
         if(!id) return alert("ID necesario");
         if(!confirm("¿Seguro que deseas eliminarlo?")) return;
+        
         try {
-            const res = await fetch(`${API_URL}/repartidores/${id}`, { method: 'DELETE' });
+            // CORRECCIÓN: Ruta /api/repartidores/:id con método DELETE
+            const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
             const result = await res.json();
-            alert(result.message);
+            alert(result.message || "Eliminado");
             limpiar();
         } catch (err) { alert("Error al eliminar"); }
     }
