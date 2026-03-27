@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Easy Pizza - Bonos de Repartidores</title>
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+    <section class="modulo-pizzas">
+        <header class="encabezado-modulo">
+            <h1>Bonos de Repartidores</h1>
+            <p>Cálculo de incentivos (Últimos 5 días)</p>
+        </header>
+
+        <div class="contenedor-busqueda seccion-interna">
+            <div class="contenedor-campos grid-2">
+                <div class="campo">
+                    <label for="id_repartidor">ID del Repartidor:</label>
+                    <input type="number" id="id_repartidor" placeholder="Ej: 101">
+                </div>
+                <div class="acciones-busqueda" style="align-self: flex-end; display: flex; gap: 10px;">
+                    <button type="button" onclick="buscarPedidos()" class="btn-secundario">🔍 Buscar Pedidos</button>
+                    <button type="button" id="btnCalcular" onclick="procesarBono()" class="btn-primario disabled" disabled>💰 Calcular Bono</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="contenedor-tabla">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Apellidos</th>
+                        <th class="centro">Pedidos Realizados</th>
+                        <th>Periodo</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaBody">
+                    <tr>
+                        <td colspan="4" class="mensaje-tabla">
+                            Ingresa un ID y presiona buscar para cargar datos...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <footer class="acciones-formulario">
+            <button type="button" onclick="limpiarPantalla()" class="btn-limpiar">Limpiar Pantalla</button>
+        </footer>
+    </section>
+
+    <script>
+        const API_URL = "http://localhost:5000";
+        let datosRepartidorActual = null;
+
+        // BUSCAR: Obtiene el conteo de pedidos del servidor vía JSON
+        async function buscarPedidos() {
+            const id = document.getElementById('id_repartidor').value;
+            if (!id) return alert("Por favor ingresa un ID");
+
+            try {
+                // El servidor debe retornar un JSON con: nombre, apellidos, pedidos, sueldo, periodo
+                const res = await fetch(`${API_URL}/bonos/consulta/${id}`);
+                const data = await res.json();
+
+                if (data && data.pedidos !== undefined) {
+                    actualizarInterfaz(data);
+                    datosRepartidorActual = data;
+                    
+                    // Habilitar botón de cálculo
+                    const btn = document.getElementById('btnCalcular');
+                    btn.disabled = false;
+                    btn.classList.remove('disabled');
+                    alert("Datos de actividad cargados.");
+                } else {
+                    alert("No se encontraron registros para este ID en el periodo actual.");
+                    limpiarPantalla();
+                }
+            } catch (err) {
+                alert("Error al conectar con el servidor de bonos");
+            }
+        }
+
+        function actualizarInterfaz(d) {
+            const body = document.getElementById('tablaBody');
+            body.innerHTML = `
+                <tr>
+                    <td class="resaltado">${d.nombre}</td>
+                    <td>${d.apellidos}</td>
+                    <td class="centro" style="font-size: 1.2rem;">${d.pedidos}</td>
+                    <td class="detalle">${d.periodo || 'Últimos 5 días'}</td>
+                </tr>
+            `;
+        }
+
+        // CALCULAR: Aplica la lógica de negocio al JSON recibido
+        function procesarBono() {
+            if (!datosRepartidorActual) return;
+
+            const sueldoBase = parseFloat(datosRepartidorActual.sueldo) || 0;
+            const numPedidos = parseInt(datosRepartidorActual.pedidos) || 0;
+            let montoBono = 0;
+
+            // Lógica: Si tiene más de 5 pedidos, bono de $15 por cada uno
+            if (numPedidos > 5) {
+                montoBono = numPedidos * 15;
+                const totalFinal = sueldoBase + montoBono;
+                
+                alert(
+                    `¡BONO APROBADO!\n` +
+                    `---------------------------\n` +
+                    `Sueldo Base: $${sueldoBase.toFixed(2)}\n` +
+                    `Bono (Pedidos > 5): $${montoBono.toFixed(2)}\n` +
+                    `---------------------------\n` +
+                    `TOTAL A PAGAR: $${totalFinal.toFixed(2)}`
+                );
+            } else {
+                alert(
+                    `SIN BONO ESTE PERIODO\n` +
+                    `---------------------------\n` +
+                    `Pedidos: ${numPedidos} (Mínimo 6 para bono)\n` +
+                    `Sueldo Base: $${sueldoBase.toFixed(2)}\n` +
+                    `---------------------------\n` +
+                    `TOTAL A PAGAR: $${sueldoBase.toFixed(2)}`
+                );
+            }
+        }
+
+        function limpiarPantalla() {
+            document.getElementById('id_repartidor').value = "";
+            document.getElementById('tablaBody').innerHTML = `
+                <tr><td colspan="4" class="mensaje-tabla">Ingresa un ID...</td></tr>
+            `;
+            const btn = document.getElementById('btnCalcular');
+            btn.disabled = true;
+            btn.classList.add('disabled');
+            datosRepartidorActual = null;
+            document.getElementById('id_repartidor').focus();
+        }
+    </script>
+</body>
+</html>

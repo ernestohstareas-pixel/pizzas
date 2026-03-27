@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Easy Pizza - Generar Pedido</title>
+    <link rel="stylesheet" href="estilos.css">
+    <style>
+        .modulo-pizzas { max-width: 950px; margin: 20px auto; background: #111827; padding: 20px; border-radius: 10px; color: white; }
+        .grid-campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .campo { display: flex; flex-direction: column; }
+        input, textarea { background: #1f2937; border: 1px solid #374151; color: white; padding: 8px; border-radius: 5px; }
+        .contenedor-total { text-align: right; margin: 20px 0; font-size: 1.5rem; color: #10b981; }
+        .acciones-formulario { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        button { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-primario { background: #ef4444; color: white; }
+        .btn-secundario { background: #3b82f6; color: white; }
+    </style>
+</head>
+<body>
+
+    <section class="modulo-pizzas">
+        <header style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #ef4444; margin: 0;">Módulo de Ventas</h1>
+            <p>Easy Pizza - Gestión de Pedidos</p>
+        </header>
+
+        <form id="form-generar-pedido">
+            <div class="grid-campos">
+                <div class="campo"><label>Id Pedido (PK):</label><input type="number" id="id_pedido"></div>
+                <div class="campo"><label>Id Pizzería (FK):</label><input type="number" id="id_pizzeria"></div>
+                <div class="campo"><label>Id Cliente (FK):</label><input type="number" id="id_cliente"></div>
+                <div class="campo"><label>Id Repartidor (FK):</label><input type="number" id="id_repartidor"></div>
+            </div>
+
+            <div style="border: 1px dashed #374151; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <legend style="color: #ef4444; font-weight: bold;">CONFIGURACIÓN DE PIZZA</legend>
+                <div class="grid-campos">
+                    <div class="campo"><label>Sabor (1-Pep, 2-Haw, 3-Que):</label><input type="number" id="sabor_id"></div>
+                    <div class="campo"><label>Cantidad:</label><input type="number" id="cantidad"></div>
+                    <div class="campo">
+                        <label>TAMAÑO:</label>
+                        <div style="display: flex; gap: 10px;">
+                            <label><input type="radio" name="talla" value="110" id="t_grande"> G ($110)</label>
+                            <label><input type="radio" name="talla" value="90" id="t_mediana"> M ($90)</label>
+                            <label><input type="radio" name="talla" value="70" id="t_chica"> C ($70)</label>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" onclick="guardarDetalles()" class="btn-secundario" style="width: 100%;">AÑADIR AL CARRITO</button>
+            </div>
+
+            <div class="grid-campos" style="grid-template-columns: 1fr 1fr;">
+                <div class="campo"><label>RESUMEN:</label><textarea id="resumen_pedido" readonly rows="4"></textarea></div>
+                <div class="campo"><label>DETALLES:</label><textarea id="detalle" readonly rows="4"></textarea></div>
+            </div>
+
+            <div class="contenedor-total">
+                Total a Pagar: $<input type="text" id="total_pagar" value="0.00" readonly style="background: transparent; border: none; color: #10b981; width: 120px; font-size: 1.5rem; font-weight: bold;">
+            </div>
+
+            <footer class="acciones-formulario">
+                <button type="button" onclick="ingresar()" class="btn-primario">FINALIZAR VENTA</button>
+                <button type="button" onclick="consultar()" class="btn-secundario" style="background: #2563eb;">CONSULTAR</button>
+                <button type="button" onclick="eliminar()" style="background: #991b1b; color: white;">BORRAR</button>
+                <button type="button" onclick="limpiarTodo()" style="background: #4b5563; color: white;">LIMPIAR</button>
+            </footer>
+        </form>
+    </section>
+
+    <script>
+    const API_URL = "http://localhost:5000";
+    let totalAcumulado = 0.0;
+
+    function guardarDetalles() {
+        const id_p = document.getElementById('id_pedido').value;
+        const id_c = document.getElementById('id_cliente').value;
+        const id_r = document.getElementById('id_repartidor').value;
+        const saborId = document.getElementById('sabor_id').value;
+        const cant = parseInt(document.getElementById('cantidad').value);
+
+        if (!id_p || !id_c || !saborId || !cant) return alert("Faltan datos del pedido o la pizza");
+
+        const sabores = { "1": "PEPERONI", "2": "HAWAIANA", "3": "QUESO" };
+        let precio = 0, tam = "";
+
+        if (document.getElementById('t_grande').checked) { precio = 110; tam = "Grande"; }
+        else if (document.getElementById('t_mediana').checked) { precio = 90; tam = "Mediana"; }
+        else if (document.getElementById('t_chica').checked) { precio = 70; tam = "Chica"; }
+        else return alert("Selecciona un tamaño");
+
+        const subtotal = precio * cant;
+        totalAcumulado += subtotal;
+
+        document.getElementById('resumen_pedido').value = `Pedido ID: ${id_p}\nCliente: ${id_c}\nRepartidor: ${id_r}`;
+        document.getElementById('detalle').value += `• ${cant} ${sabores[saborId]} (${tam}) - $${subtotal}\n`;
+        document.getElementById('total_pagar').value = totalAcumulado.toFixed(2);
+    }
+
+    async function ingresar() {
+        const total = document.getElementById('total_pagar').value;
+        const dts = document.getElementById('detalle').value;
+
+        if (parseFloat(total) <= 0 || !dts) return alert("El carrito está vacío");
+
+        const pedido = {
+            id_pedido: document.getElementById('id_pedido').value,
+            id_pizzeria: document.getElementById('id_pizzeria').value,
+            id_cliente: document.getElementById('id_cliente').value,
+            id_repartidor: document.getElementById('id_repartidor').value,
+            total: total,
+            detalles: dts
+        };
+
+        try {
+            const res = await fetch(`${API_URL}/pedidos`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(pedido)
+            });
+            if (res.ok) { alert("✅ Venta Guardada"); limpiarTodo(); }
+        } catch (err) { alert("❌ Error de conexión"); }
+    }
+
+    async function consultar() {
+        const id = document.getElementById('id_pedido').value;
+        if (!id) return alert("Ingresa un ID de Pedido");
+
+        try {
+            const res = await fetch(`${API_URL}/pedidos/${id}`);
+            const data = await res.json();
+
+            if (res.ok && !data.error) {
+                document.getElementById('id_pizzeria').value = data.id_pizzeria;
+                document.getElementById('id_cliente').value = data.id_cliente;
+                document.getElementById('id_repartidor').value = data.id_repartidor;
+                document.getElementById('total_pagar').value = parseFloat(data.total).toFixed(2);
+                
+                // Forzamos la escritura de los detalles
+                document.getElementById('detalle').value = data.detalles || "Sin detalles registrados"; 
+                document.getElementById('resumen_pedido').value = `Pedido ID: ${data.id_pedido}\nCliente: ${data.id_cliente}\nRepartidor: ${data.id_repartidor}`;
+                
+                totalAcumulado = parseFloat(data.total);
+            } else { alert("❌ No existe el pedido #" + id); }
+        } catch (err) { alert("❌ Error en el servidor"); }
+    }
+
+    async function eliminar() {
+        const id = document.getElementById('id_pedido').value;
+        if (!id || !confirm("¿Borrar pedido #" + id + "?")) return;
+        try {
+            const res = await fetch(`${API_URL}/pedidos/${id}`, { method: 'DELETE' });
+            if (res.ok) { alert("🗑️ Eliminado"); limpiarTodo(); }
+        } catch (err) { alert("❌ Error"); }
+    }
+
+    function limpiarTodo() {
+        document.getElementById('form-generar-pedido').reset();
+        document.getElementById('detalle').value = "";
+        document.getElementById('resumen_pedido').value = "";
+        document.getElementById('total_pagar').value = "0.00";
+        totalAcumulado = 0;
+    }
+</script>
+</body>
+</html>

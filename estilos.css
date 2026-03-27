@@ -1,0 +1,255 @@
+/* --- CONFIGURACIÓN BASE Y COLORES --- */
+:root {
+    --bg-dark: #020617;        /* Slate 950 */
+    --panel-dark: #0f172a;     /* Slate 900 */
+    --border-slate: #1e293b;   /* Slate 800 */
+    --accent-orange: #f97316;  /* Orange 500 */
+    --accent-hover: #ea580c;   /* Orange 600 */
+    --text-main: #f1f5f9;      /* Slate 100 */
+    --text-dim: #94a3b8;       /* Slate 400 */
+    --glass-bg: rgba(15, 23, 42, 0.7);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background: transparent; /* Importante para el iframe */
+    color: var(--text-main);
+    overflow-x: hidden;
+}
+
+/* --- CONTENEDOR PRINCIPAL DEL MÓDULO --- */
+.modulo-pizzas {
+    padding: 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.encabezado-modulo {
+    text-align: center;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--border-slate);
+    padding-bottom: 1rem;
+}
+
+.encabezado-modulo h1 {
+    font-size: 1.5rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent-orange);
+    font-style: italic;
+}
+
+.encabezado-modulo p {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+}
+
+/* --- FORMULARIOS Y CAMPOS --- */
+.contenedor-campos {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.campo label {
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: var(--text-dim);
+    text-transform: uppercase;
+}
+
+.campo input, .campo select, .campo textarea {
+    background: var(--bg-dark);
+    border: 1px solid var(--border-slate);
+    padding: 0.8rem;
+    border-radius: 0.5rem;
+    color: white;
+    outline: none;
+    transition: all 0.3s;
+}
+
+.campo input:focus, .campo select:focus {
+    border-color: var(--accent-orange);
+    box-shadow: 0 0 10px rgba(249, 115, 22, 0.2);
+}
+
+.area-detalle, textarea {
+    height: 100px;
+    resize: none;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+/* --- TABLAS ESTILO DARK --- */
+.contenedor-tabla {
+    background: var(--panel-dark);
+    border: 1px solid var(--border-slate);
+    border-radius: 0.8rem;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+thead {
+    background: rgba(30, 41, 59, 0.5);
+}
+
+th {
+    padding: 1rem;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border-slate);
+}
+
+td {
+    padding: 1rem;
+    font-size: 0.9rem;
+    border-bottom: 1px solid var(--border-slate);
+}
+
+tr:hover {
+    background: rgba(249, 115, 22, 0.05);
+}
+
+.mensaje-tabla {
+    text-align: center;
+    color: var(--text-dim);
+    font-style: italic;
+    padding: 3rem;
+}
+
+/* Clases específicas de tabla */
+.resaltado { color: var(--accent-orange); font-weight: bold; }
+.centro { text-align: center; font-weight: 900; }
+.monto { color: #10b981; font-weight: bold; font-family: monospace; }
+
+/* --- BOTONES --- */
+.acciones-formulario, .acciones-busqueda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+}
+
+button {
+    padding: 0.8rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s;
+}
+
+.btn-primario { background: var(--accent-orange); color: white; }
+.btn-primario:hover { background: var(--accent-hover); transform: scale(1.05); }
+
+.btn-secundario { background: #3b82f6; color: white; }
+.btn-secundario:hover { background: #2563eb; }
+
+.btn-alerta { background: #eab308; color: black; }
+.btn-peligro { background: #ef4444; color: white; }
+.btn-limpiar { background: #64748b; color: white; }
+
+button:disabled, .disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    filter: grayscale(1);
+}
+
+/* --- SECCIONES ESPECIALES (PEDIDOS/BONOS) --- */
+.seccion-interna {
+    background: rgba(30, 41, 59, 0.3);
+    padding: 1.5rem;
+    border-radius: 1rem;
+    border: 1px dashed var(--border-slate);
+    margin-bottom: 1.5rem;
+}
+
+legend {
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: var(--accent-orange);
+    padding: 0 1rem;
+    text-transform: uppercase;
+}
+
+.opciones-radio {
+    display: flex;
+    gap: 1rem;
+    background: var(--bg-dark);
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+.opciones-radio label {
+    font-size: 0.7rem;
+    cursor: pointer;
+}
+
+.contenedor-total {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1.5rem;
+}
+
+.campo-total input {
+    font-size: 2rem !important;
+    font-weight: 900;
+    color: #10b981 !important;
+    text-align: right;
+    width: 250px;
+}
+
+.pie-pagina {
+    text-align: center;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    margin-top: 2rem;
+    text-transform: uppercase;
+}
+
+/* Scroll personalizado */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-dark); }
+::-webkit-scrollbar-thumb { background: var(--border-slate); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-orange); }
+
+@media print {
+    body { background: white; color: black; }
+    .modulo-pizzas { background: white; box-shadow: none; }
+    .btn-primario, .btn-secundario, .btn-limpiar, .seccion-interna { display: none; } /* Oculta botones al imprimir */
+    table { border: 1px solid #000; }
+    th { background: #eee; color: black; }
+}

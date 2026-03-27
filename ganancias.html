@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Easy Pizza - Corte de Caja</title>
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+    <section class="modulo-pizzas">
+        <header class="encabezado-modulo">
+            <h1>Corte de Caja y Ganancias</h1>
+            <p>Resumen de ventas por periodo</p>
+        </header>
+
+        <div class="contenedor-tabla scroll-h">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Id Pedido</th>
+                        <th>Id Cliente</th>
+                        <th>Nombre Cliente</th>
+                        <th>Fecha</th>
+                        <th class="centro">Total</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaCuerpo">
+                    <tr>
+                        <td colspan="5" class="mensaje-tabla">Presiona "Contar Pedidos" para iniciar el corte...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <footer class="acciones-formulario">
+            <button type="button" onclick="obtenerPedidos()" class="btn-secundario">📅 Contar Pedidos</button>
+            <button type="button" onclick="calcularGanancias()" class="btn-primario">💰 Calcular Ganancias</button>
+            <button type="button" onclick="limpiarTabla()" class="btn-limpiar">🧹 Limpiar</button>
+        </footer>
+
+        <p class="pie-pagina">Módulo de administración - UPVM 2026</p>
+    </section>
+
+    <script>
+        const API_URL = "http://localhost:5000";
+        let tablaDatos = []; // Aquí guardaremos el JSON que llegue del servidor
+
+        async function obtenerPedidos() {
+            const fecha = prompt("¿De qué día quieres calcular tus ganancias? (Formato: YYYY-MM-DD)");
+            if (!fecha) return;
+
+            try {
+                // Consultamos al servidor enviando la fecha como parámetro
+                const res = await fetch(`${API_URL}/pedidos?fecha=${fecha}`);
+                const data = await res.json();
+
+                if (data && data.length > 0) {
+                    tablaDatos = data; // Guardamos el JSON en nuestra variable global
+                    llenarTabla(data);
+                    alert(`Se encontraron ${data.length} pedidos en la fecha ${fecha}`);
+                } else {
+                    alert("No hay ventas registradas en esa fecha.");
+                    limpiarTabla();
+                }
+            } catch (err) {
+                alert("Error al conectar con el servidor");
+            }
+        }
+
+        function llenarTabla(data) {
+    const cuerpo = document.getElementById('tablaCuerpo');
+    cuerpo.innerHTML = "";
+    
+    data.forEach(p => {
+        cuerpo.innerHTML += `
+            <tr>
+                <td class="resaltado">${p.id_pedido}</td>
+                <td class="codigo">${p.id_cliente}</td>
+                <td>${p.nombre_completo || 'Cliente General'}</td> 
+                <td>${p.fecha}</td>
+                <td class="monto centro">$${parseFloat(p.total).toFixed(2)}</td>
+            </tr>
+        `;
+    });
+}
+
+        function calcularGanancias() {
+            if (tablaDatos.length === 0) {
+                return alert("Primero debes cargar los pedidos de una fecha.");
+            }
+
+            // Usamos reduce para sumar todos los totales del JSON
+            const granTotal = tablaDatos.reduce((acc, p) => acc + parseFloat(p.total), 0);
+
+            alert(
+                `RESUMEN DE CORTE\n` +
+                `---------------------------\n` +
+                `Total de Pedidos: ${tablaDatos.length}\n` +
+                `Ganancia Total: $${granTotal.toFixed(2)}\n` +
+                `---------------------------\n` +
+                `¡Buen trabajo, el corte es correcto!`
+            );
+        }
+
+        function limpiarTabla() {
+            document.getElementById('tablaCuerpo').innerHTML = `
+                <tr><td colspan="5" class="mensaje-tabla">Tabla limpia. Esperando nueva consulta...</td></tr>
+            `;
+            tablaDatos = [];
+        }
+    </script>
+</body>
+</html>

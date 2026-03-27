@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Easy Pizza - Clientes</title>
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+    <section class="modulo-pizzas">
+        <header class="encabezado-modulo">
+            <h1>Registro y Control de Clientes</h1>
+            <p>Administración de cartera de clientes</p>
+        </header>
+
+        <form id="form-clientes" class="formulario-pizzas">
+            <div class="contenedor-campos grid-2">
+                <div class="campo">
+                    <label for="id_cliente">ID Cliente (PK):</label>
+                    <input type="number" id="id_cliente" placeholder="ID del cliente">
+                </div>
+
+                <div class="campo">
+                    <label for="id_pizzeria">ID Pizzería (FK):</label>
+                    <input type="number" id="id_pizzeria" placeholder="Sucursal">
+                </div>
+
+                <div class="campo ancho-completo" style="grid-column: span 2;">
+                    <label for="nombre_completo">Nombre Completo:</label>
+                    <input type="text" id="nombre_completo" placeholder="Nombre y apellidos">
+                </div>
+
+                <div class="campo ancho-completo" style="grid-column: span 2;">
+                    <label for="direccion">Dirección:</label>
+                    <input type="text" id="direccion" placeholder="Calle, número y colonia">
+                </div>
+
+                <div class="campo">
+                    <label for="telefono">Teléfono:</label>
+                    <input type="text" id="telefono" maxlength="15" placeholder="Móvil o casa">
+                </div>
+            </div>
+
+            <footer class="acciones-formulario">
+                <button type="button" onclick="registrar()" class="btn-primario">Registrar</button>
+                <button type="button" onclick="consultar()" class="btn-secundario">Consultar</button>
+                <button type="button" onclick="modificar()" class="btn-alerta">Modificar</button>
+                <button type="button" onclick="eliminar()" class="btn-peligro">Eliminar</button>
+                <button type="button" onclick="limpiar()" class="btn-limpiar">Limpiar</button>
+            </footer>
+        </form>
+
+        <p class="pie-pagina">Easy Pizza - UPVM 2026</p>
+    </section>
+
+    <script>
+        const API_URL = "http://localhost:5000";
+
+        // Esta función empaqueta todo en el formato JSON que mencionamos
+        function obtenerDatosJSON() {
+            return {
+                id_cliente: document.getElementById('id_cliente').value,
+                id_pizzeria: document.getElementById('id_pizzeria').value,
+                nombre_completo: document.getElementById('nombre_completo').value,
+                direccion: document.getElementById('direccion').value,
+                telefono: document.getElementById('telefono').value
+            };
+        }
+
+        async function registrar() {
+            const data = obtenerDatosJSON();
+            
+            // Validación simple antes de enviar el JSON
+            if (!data.id_cliente || !data.nombre_completo) {
+                return alert("ID y Nombre son obligatorios");
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/clientes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data) // Aquí enviamos el JSON al servidor
+                });
+                
+                if (res.ok) {
+                    alert("Cliente registrado con éxito");
+                    limpiar();
+                }
+            } catch (err) {
+                alert("Error al conectar con el servidor");
+            }
+        }
+
+        async function consultar() {
+            const id = document.getElementById('id_cliente').value;
+            if (!id) return alert("Ingresa un ID para buscar");
+
+            try {
+                const res = await fetch(`${API_URL}/clientes/${id}`);
+                const data = await res.json(); // Recibimos la respuesta en JSON
+
+                if (data) {
+                    // Llenamos el formulario con los datos recibidos
+                    document.getElementById('id_pizzeria').value = data.id_pizzeria;
+                    document.getElementById('nombre_completo').value = data.nombre_completo;
+                    document.getElementById('direccion').value = data.direccion;
+                    document.getElementById('telefono').value = data.telefono;
+                    alert("Datos cargados");
+                } else {
+                    alert("Cliente no encontrado");
+                }
+            } catch (err) {
+                alert("Error en la consulta");
+            }
+        }
+
+        async function modificar() {
+            const data = obtenerDatosJSON();
+            if (!data.id_cliente) return alert("Se necesita el ID para actualizar");
+
+            try {
+                const res = await fetch(`${API_URL}/clientes/${data.id_cliente}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (res.ok) alert("Información actualizada");
+            } catch (err) {
+                alert("Error al modificar");
+            }
+        }
+
+        async function eliminar() {
+            const id = document.getElementById('id_cliente').value;
+            if (!id) return alert("Ingresa el ID del cliente a eliminar");
+
+            if (confirm(`¿Seguro que deseas eliminar al cliente ${id}?`)) {
+                try {
+                    const res = await fetch(`${API_URL}/clientes/${id}`, {
+                        method: 'DELETE'
+                    });
+                    if (res.ok) {
+                        alert("Cliente eliminado");
+                        limpiar();
+                    }
+                } catch (err) {
+                    alert("Error al eliminar");
+                }
+            }
+        }
+
+        function limpiar() {
+            document.getElementById('form-clientes').reset();
+            document.getElementById('id_cliente').focus();
+        }
+    </script>
+</body>
+</html>

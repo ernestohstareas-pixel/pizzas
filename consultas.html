@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Easy Pizza - Consultas Generales</title>
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+    <section class="modulo-pizzas">
+        <header class="encabezado-modulo">
+            <h1>Consultas del Sistema</h1>
+            <p>Visualización de registros en tiempo real</p>
+        </header>
+
+        <div class="seccion-interna">
+            <div class="contenedor-campos grid-2">
+                <div class="campo">
+                    <label for="tipo_consulta">Selecciona Categoría:</label>
+                    <select id="tipo_consulta">
+                        <option value="repartidores">Lista de Repartidores</option>
+                        <option value="clientes">Directorio de Clientes</option>
+                        <option value="pedidos">Historial de Ventas</option>
+                    </select>
+                </div>
+                <div class="acciones-busqueda" style="align-self: flex-end;">
+                    <button type="button" onclick="cargarTabla()" class="btn-primario">
+                        🔄 Actualizar Tabla
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="contenedor-tabla">
+            <table id="tabla-datos">
+                <thead id="cabecera-tabla">
+                    </thead>
+                <tbody id="cuerpo-tabla">
+                    <tr>
+                        <td class="mensaje-tabla">Selecciona una categoría y presiona actualizar...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <footer class="acciones-formulario">
+            <button type="button" onclick="window.print()" class="btn-secundario">Imprimir Reporte</button>
+            <button type="button" onclick="limpiarTabla()" class="btn-limpiar">Limpiar</button>
+        </footer>
+    </section>
+
+    <script>
+        const API_URL = "http://localhost:3000";
+
+        async function cargarTabla() {
+            const tipo = document.getElementById('tipo_consulta').value;
+            const cabecera = document.getElementById('cabecera-tabla');
+            const cuerpo = document.getElementById('cuerpo-tabla');
+
+            cuerpo.innerHTML = '<tr><td class="mensaje-tabla">Cargando datos...</td></tr>';
+
+            try {
+                const res = await fetch(`${API_URL}/${tipo}`);
+                const data = await res.json();
+
+                if (!data || data.length === 0) {
+                    cuerpo.innerHTML = '<tr><td class="mensaje-tabla">No hay registros disponibles.</td></tr>';
+                    return;
+                }
+
+                // 1. Configurar Cabeceras según el tipo
+                if (tipo === 'repartidores') {
+                    cabecera.innerHTML = `
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre Completo</th>
+                            <th>Teléfono</th>
+                            <th>Sueldo</th>
+                        </tr>`;
+                    // 2. Llenar filas
+                    cuerpo.innerHTML = data.map(r => `
+                        <tr>
+                            <td class="resaltado">${r.id_repartidor}</td>
+                            <td>${r.nombre} ${r.apellidos}</td>
+                            <td>${r.tel}</td>
+                            <td class="monto">$${r.sueldo}</td>
+                        </tr>
+                    `).join('');
+
+                } else if (tipo === 'clientes') {
+                    cabecera.innerHTML = `
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Dirección</th>
+                            <th>Teléfono</th>
+                        </tr>`;
+                    cuerpo.innerHTML = data.map(c => `
+                        <tr>
+                            <td class="resaltado">${c.id_cliente}</td>
+                            <td>${c.nombre_completo}</td>
+                            <td>${c.direccion}</td>
+                            <td>${c.telefono}</td>
+                        </tr>
+                    `).join('');
+
+                } else if (tipo === 'pedidos') {
+                    cabecera.innerHTML = `
+                        <tr>
+                            <th>ID</th>
+                            <th>Cliente</th>
+                            <th>Fecha</th>
+                            <th class="centro">Total</th>
+                        </tr>`;
+                    cuerpo.innerHTML = data.map(p => `
+                        <tr>
+                            <td class="resaltado">${p.id_pedido}</td>
+                            <td>ID: ${p.id_cliente}</td>
+                            <td>${p.fecha}</td>
+                            <td class="monto centro">$${p.total}</td>
+                        </tr>
+                    `).join('');
+                }
+
+            } catch (err) {
+                alert("Error al conectar con la base de datos");
+                cuerpo.innerHTML = '<tr><td class="mensaje-tabla">Error de conexión.</td></tr>';
+            }
+        }
+
+        function limpiarTabla() {
+            document.getElementById('cabecera-tabla').innerHTML = "";
+            document.getElementById('cuerpo-tabla').innerHTML = '<tr><td class="mensaje-tabla">Tabla limpia.</td></tr>';
+        }
+    </script>
+</body>
+</html>
