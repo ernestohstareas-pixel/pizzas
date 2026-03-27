@@ -8,8 +8,8 @@ app.use(cors());
 app.use(express.json());
 
 // --- 1. CONFIGURACIÓN DE ARCHIVOS ESTÁTICOS ---
-// Se configura para buscar la carpeta 'public' en la raíz del proyecto
-app.use(express.static(path.join(__dirname, 'public')));
+// Como tus archivos están en la raíz, usamos '.' o directamente __dirname
+app.use(express.static(__dirname));
 
 // --- 2. CONFIGURACIÓN DE BASE DE DATOS (OPTIMIZADA PARA RAILWAY) ---
 const db = mysql.createConnection({
@@ -30,19 +30,17 @@ db.connect(err => {
 });
 
 // --- 3. RUTAS DE NAVEGACIÓN (FRONTEND) ---
-// Ruta principal: Carga el archivo index.html
+// Ahora buscan los archivos en la raíz del proyecto
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Ruta de login: Carga el archivo login.html
 app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+    res.sendFile(path.join(__dirname, 'index.html')); // Tu login parece estar en index o redireccionado
 });
 
-// --- 4. API (BACKEND - LOGIN Y CRUD) ---
+// --- 4. API (LOGIN Y CRUD) ---
 
-// Login de usuarios
 app.post('/api/login', (req, res) => {
     const { correo, password } = req.body;
     const sql = 'SELECT * FROM pizzerias WHERE correo_admin = ? AND password_hash = ?';
@@ -53,7 +51,6 @@ app.post('/api/login', (req, res) => {
     });
 });
 
-// Gestión de Repartidores
 app.get('/api/repartidores', (req, res) => {
     const sql = "SELECT id_repartidor, nombre, apellidos, tel, sueldo FROM repartidores";
     db.query(sql, (err, results) => {
@@ -71,7 +68,6 @@ app.post('/api/repartidores', (req, res) => {
     });
 });
 
-// Gestión de Clientes
 app.get('/api/clientes', (req, res) => {
     const sql = "SELECT id_cliente, nombre_completo, direccion, telefono FROM clientes";
     db.query(sql, (err, results) => {
@@ -89,7 +85,6 @@ app.post('/api/clientes', (req, res) => {
     });
 });
 
-// Gestión de Pedidos
 app.get('/api/pedidos', (req, res) => {
     const fecha = req.query.fecha;
     let sql = `
@@ -125,7 +120,6 @@ app.post('/api/pedidos', (req, res) => {
     });
 });
 
-// Consulta de Bonos para Repartidores
 app.get('/api/bonos/consulta/:id', (req, res) => {
     const id_repartidor = req.params.id;
     const sql = `
