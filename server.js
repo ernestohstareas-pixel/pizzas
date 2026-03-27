@@ -8,15 +8,15 @@ app.use(cors());
 app.use(express.json());
 
 // --- 1. CONFIGURACIÓN DE ARCHIVOS ESTÁTICOS ---
-// Como tus archivos están en la raíz, usamos '.' o directamente __dirname
+// Servir archivos directamente desde la raíz donde está server.js
 app.use(express.static(__dirname));
 
 // --- 2. CONFIGURACIÓN DE BASE DE DATOS (OPTIMIZADA PARA RAILWAY) ---
 const db = mysql.createConnection({
-    host: process.env.MYSQLHOST || 'localhost',
-    user: process.env.MYSQLUSER || 'root',
-    password: process.env.MYSQLPASSWORD || '', 
-    database: process.env.MYSQL_DATABASE || process.env.MYSQLDATABASE || 'pizzas',
+    host: process.env.MYSQLHOST,
+    user: process.env.MYSQLUSER,
+    password: process.env.MYSQLPASSWORD, 
+    database: process.env.MYSQL_DATABASE || process.env.MYSQLDATABASE,
     port: process.env.MYSQLPORT || 3306,
     connectTimeout: 10000 
 });
@@ -30,13 +30,14 @@ db.connect(err => {
 });
 
 // --- 3. RUTAS DE NAVEGACIÓN (FRONTEND) ---
-// Ahora buscan los archivos en la raíz del proyecto
+// Ruta raíz: envía el index.html que está en tu repositorio principal
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Si intentas acceder a /login, asegúrate de que el archivo existe
 app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html')); // Tu login parece estar en index o redireccionado
+    res.sendFile(path.join(__dirname, 'index.html')); 
 });
 
 // --- 4. API (LOGIN Y CRUD) ---
@@ -147,8 +148,9 @@ app.get('/api/bonos/consulta/:id', (req, res) => {
     });
 });
 
-// --- 5. INICIO DEL SERVIDOR ---
-const PORT = process.env.PORT || 5000;
+// --- 5. PUERTO DINÁMICO ---
+// IMPORTANTE: Railway usa el puerto que le asigne la variable de entorno PORT
+const PORT = process.env.PORT || 8080; 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor de Easy Pizza activo en puerto: ${PORT}`);
 });
