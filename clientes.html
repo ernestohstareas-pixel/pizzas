@@ -6,7 +6,6 @@
     <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
-
     <section class="modulo-pizzas">
         <header class="encabezado-modulo">
             <h1>Registro y Control de Clientes</h1>
@@ -19,22 +18,18 @@
                     <label for="id_cliente">ID Cliente (PK):</label>
                     <input type="number" id="id_cliente" placeholder="ID del cliente">
                 </div>
-
                 <div class="campo">
                     <label for="id_pizzeria">ID Pizzería (FK):</label>
                     <input type="number" id="id_pizzeria" placeholder="Sucursal">
                 </div>
-
                 <div class="campo ancho-completo" style="grid-column: span 2;">
                     <label for="nombre_completo">Nombre Completo:</label>
                     <input type="text" id="nombre_completo" placeholder="Nombre y apellidos">
                 </div>
-
                 <div class="campo ancho-completo" style="grid-column: span 2;">
                     <label for="direccion">Dirección:</label>
                     <input type="text" id="direccion" placeholder="Calle, número y colonia">
                 </div>
-
                 <div class="campo">
                     <label for="telefono">Teléfono:</label>
                     <input type="text" id="telefono" maxlength="15" placeholder="Móvil o casa">
@@ -49,111 +44,104 @@
                 <button type="button" onclick="limpiar()" class="btn-limpiar">Limpiar</button>
             </footer>
         </form>
-
         <p class="pie-pagina">Easy Pizza - UPVM 2026</p>
     </section>
 
     <script>
-    // Definimos la base de la ruta igual que en el login y repartidores
-    const API_URL = "/api/clientes";
+        // Ruta relativa para que Railway la reconozca sin importar el puerto
+        const API_URL = "/api/clientes";
 
-    // Función para empaquetar datos (Se corrigió la validación de elementos null)
-    function obtenerDatosJSON() {
-        const idCliente = document.getElementById('id_cliente');
-        if (!idCliente) return null;
-
-        return {
-            id_cliente: idCliente.value,
-            id_pizzeria: document.getElementById('id_pizzeria').value || 1,
-            nombre_completo: document.getElementById('nombre_completo').value,
-            direccion: document.getElementById('direccion').value,
-            telefono: document.getElementById('telefono').value
-        };
-    }
-
-    // REGISTRAR (POST) - Corregido: API_URL directo
-    async function registrar() {
-        const data = obtenerDatosJSON();
-        if (!data || !data.nombre_completo) return alert("El nombre es obligatorio");
-
-        try {
-            const res = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
+        function obtenerDatosJSON() {
+            const elId = document.getElementById('id_cliente');
+            const elNombre = document.getElementById('nombre_completo');
             
-            const result = await res.json();
-            alert(result.message || "Cliente registrado");
-            if (res.ok) limpiar();
-        } catch (err) {
-            alert("Error al conectar con el servidor");
+            // Validación para evitar errores si el modal se está cargando
+            if (!elId || !elNombre) return null;
+
+            return {
+                id_cliente: elId.value,
+                id_pizzeria: document.getElementById('id_pizzeria').value || 1,
+                nombre_completo: elNombre.value,
+                direccion: document.getElementById('direccion').value,
+                telefono: document.getElementById('telefono').value
+            };
         }
-    }
 
-    // CONSULTAR (GET) - Corregido: Ruta /api/clientes/:id
-    async function consultar() {
-        const id = document.getElementById('id_cliente').value;
-        if (!id) return alert("Ingresa un ID para buscar");
+        async function registrar() {
+            const data = obtenerDatosJSON();
+            if (!data || !data.nombre_completo) return alert("El nombre es obligatorio");
 
-        try {
-            const res = await fetch(`${API_URL}/${id}`);
-            if (!res.ok) throw new Error("No encontrado");
-            const data = await res.json();
-
-            if (data) {
-                document.getElementById('id_pizzeria').value = data.id_pizzeria;
-                document.getElementById('nombre_completo').value = data.nombre_completo;
-                document.getElementById('direccion').value = data.direccion;
-                document.getElementById('telefono').value = data.telefono;
-            }
-        } catch (err) {
-            alert("Cliente no encontrado");
-        }
-    }
-
-    // MODIFICAR (PUT) - Corregido: Ruta /api/clientes/:id
-    async function modificar() {
-        const data = obtenerDatosJSON();
-        if (!data || !data.id_cliente) return alert("Se necesita el ID");
-
-        try {
-            const res = await fetch(`${API_URL}/${data.id_cliente}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const result = await res.json();
-            alert(result.message || "Datos actualizados");
-        } catch (err) {
-            alert("Error al modificar");
-        }
-    }
-
-    // ELIMINAR (DELETE) - Corregido: Ruta /api/clientes/:id
-    async function eliminar() {
-        const id = document.getElementById('id_cliente').value;
-        if (!id) return alert("Ingresa el ID");
-
-        if (confirm(`¿Eliminar cliente ${id}?`)) {
             try {
-                const res = await fetch(`${API_URL}/${id}`, {
-                    method: 'DELETE'
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
                 });
-                if (res.ok) {
-                    alert("Cliente eliminado");
-                    limpiar();
+                const result = await res.json();
+                alert(result.message || "Operación realizada");
+                if (res.ok) limpiar();
+            } catch (err) {
+                alert("Error: No se pudo conectar con el servidor en Railway");
+            }
+        }
+
+        async function consultar() {
+            const id = document.getElementById('id_cliente')?.value;
+            if (!id) return alert("Ingresa un ID para buscar");
+
+            try {
+                const res = await fetch(`${API_URL}/${id}`);
+                if (!res.ok) throw new Error("No encontrado");
+                const data = await res.json();
+
+                if (data) {
+                    document.getElementById('id_pizzeria').value = data.id_pizzeria || "";
+                    document.getElementById('nombre_completo').value = data.nombre_completo || "";
+                    document.getElementById('direccion').value = data.direccion || "";
+                    document.getElementById('telefono').value = data.telefono || "";
                 }
             } catch (err) {
-                alert("Error al eliminar");
+                alert("Cliente no encontrado en la base de datos");
             }
         }
-    }
 
-    function limpiar() {
-        const form = document.getElementById('form-clientes');
-        if (form) form.reset();
-    }
-</script>
+        async function modificar() {
+            const data = obtenerDatosJSON();
+            if (!data || !data.id_cliente) return alert("Se necesita el ID para actualizar");
+
+            try {
+                const res = await fetch(`${API_URL}/${data.id_cliente}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                alert(result.message || "Información actualizada");
+            } catch (err) {
+                alert("Error al intentar modificar los datos");
+            }
+        }
+
+        async function eliminar() {
+            const id = document.getElementById('id_cliente')?.value;
+            if (!id) return alert("Ingresa el ID del cliente a eliminar");
+
+            if (confirm(`¿Seguro que deseas eliminar al cliente ${id}?`)) {
+                try {
+                    const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                    const result = await res.json();
+                    alert(result.message || "Eliminado");
+                    if (res.ok) limpiar();
+                } catch (err) {
+                    alert("Error al intentar eliminar");
+                }
+            }
+        }
+
+        function limpiar() {
+            const form = document.getElementById('form-clientes');
+            if (form) form.reset();
+        }
+    </script>
 </body>
 </html>
