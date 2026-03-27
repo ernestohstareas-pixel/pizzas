@@ -48,14 +48,13 @@
     </section>
 
     <script>
-        // Ruta relativa para que Railway la reconozca sin importar el puerto
+        // Ruta relativa para Railway
         const API_URL = "/api/clientes";
 
         function obtenerDatosJSON() {
             const elId = document.getElementById('id_cliente');
             const elNombre = document.getElementById('nombre_completo');
             
-            // Validación para evitar errores si el modal se está cargando
             if (!elId || !elNombre) return null;
 
             return {
@@ -69,7 +68,9 @@
 
         async function registrar() {
             const data = obtenerDatosJSON();
-            if (!data || !data.nombre_completo) return alert("El nombre es obligatorio");
+            if (!data || !data.id_cliente || !data.nombre_completo) {
+                return alert("ID y Nombre son obligatorios");
+            }
 
             try {
                 const res = await fetch(API_URL, {
@@ -77,11 +78,14 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
+                
                 const result = await res.json();
-                alert(result.message || "Operación realizada");
+                // Mostramos el mensaje exacto del servidor
+                alert(result.message || result.error || "Operación finalizada");
+                
                 if (res.ok) limpiar();
             } catch (err) {
-                alert("Error: No se pudo conectar con el servidor en Railway");
+                alert("Error: No hay conexión con el servidor");
             }
         }
 
@@ -91,23 +95,24 @@
 
             try {
                 const res = await fetch(`${API_URL}/${id}`);
-                if (!res.ok) throw new Error("No encontrado");
                 const data = await res.json();
 
-                if (data) {
+                if (res.ok) {
                     document.getElementById('id_pizzeria').value = data.id_pizzeria || "";
                     document.getElementById('nombre_completo').value = data.nombre_completo || "";
                     document.getElementById('direccion').value = data.direccion || "";
                     document.getElementById('telefono').value = data.telefono || "";
+                } else {
+                    alert(data.error || "Cliente no encontrado");
                 }
             } catch (err) {
-                alert("Cliente no encontrado en la base de datos");
+                alert("Error al consultar en la base de datos");
             }
         }
 
         async function modificar() {
             const data = obtenerDatosJSON();
-            if (!data || !data.id_cliente) return alert("Se necesita el ID para actualizar");
+            if (!data || !data.id_cliente) return alert("Se necesita el ID");
 
             try {
                 const res = await fetch(`${API_URL}/${data.id_cliente}`, {
@@ -116,24 +121,24 @@
                     body: JSON.stringify(data)
                 });
                 const result = await res.json();
-                alert(result.message || "Información actualizada");
+                alert(result.message || result.error || "Actualizado");
             } catch (err) {
-                alert("Error al intentar modificar los datos");
+                alert("Error al modificar");
             }
         }
 
         async function eliminar() {
             const id = document.getElementById('id_cliente')?.value;
-            if (!id) return alert("Ingresa el ID del cliente a eliminar");
+            if (!id) return alert("Ingresa el ID");
 
-            if (confirm(`¿Seguro que deseas eliminar al cliente ${id}?`)) {
+            if (confirm(`¿Eliminar cliente ${id}?`)) {
                 try {
                     const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
                     const result = await res.json();
-                    alert(result.message || "Eliminado");
+                    alert(result.message || result.error || "Eliminado");
                     if (res.ok) limpiar();
                 } catch (err) {
-                    alert("Error al intentar eliminar");
+                    alert("Error al eliminar");
                 }
             }
         }
