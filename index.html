@@ -44,32 +44,36 @@
     </div>
 
     <script>
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        // CORRECCIÓN: Usamos el ID "email" que definimos arriba
-        const correo = document.getElementById('email').value; 
-        const password = document.getElementById('pass').value;
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const correo = document.getElementById('email').value; 
+    const password = document.getElementById('pass').value;
 
-        try {
-            const res = await fetch('http://localhost:8080/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ correo, password })
-            });
+    try {
+        // CAMBIO CRÍTICO: Usamos una ruta relativa '/api/login' 
+        // para que funcione tanto en local como en Railway.
+        const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ correo, password })
+        });
 
-            const data = await res.json();
+        const data = await res.json();
 
-            if (res.ok && data.success) {
-                // Asegúrate de que menuPrincipal.html esté en src/public
-                window.location.href = 'menuPrincipal.html';
-            } else {
-                alert("❌ " + (data.error || "Usuario no encontrado"));
-            }
-        } catch (error) {
-            alert("❌ El servidor Node.js no está respondiendo en el puerto 5000.");
+        if (res.ok && data.success) {
+            // Guarda la sesión si es necesario y redirige
+            localStorage.setItem('user', data.user);
+            window.location.href = 'menuPrincipal.html';
+        } else {
+            alert("❌ " + (data.error || "Credenciales incorrectas"));
         }
-    });
-    </script>
+    } catch (error) {
+        // Error genérico de conexión
+        alert("❌ Error de conexión con el servidor.");
+        console.error(error);
+    }
+});
+</script>
 </body>
 </html>
