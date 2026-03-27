@@ -1,11 +1,66 @@
-<script>
-    // Definimos la base de la ruta igual que en el login
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Easy Pizza - Gestión de Repartidores</title>
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+    <section class="modulo-pizzas">
+        <header class="encabezado-modulo">
+            <h1>Gestión de Repartidores</h1>
+            <p>Registro y Control de Personal</p>
+        </header>
+
+        <form id="form-repartidores">
+            <div class="contenedor-campos grid-3">
+                <div class="campo">
+                    <label for="id_repartidor">ID Repartidor (PK):</label>
+                    <input type="number" id="id_repartidor" name="id_repartidor" placeholder="Llave primaria">
+                </div>
+                <div class="campo">
+                    <label for="id_pizzeria">ID Pizzería (FK):</label>
+                    <input type="number" id="id_pizzeria" name="id_pizzeria" placeholder="Clave foránea">
+                </div>
+                <div class="campo">
+                    <label for="nombre">Nombre:</label>
+                    <input type="text" id="nombre" name="nombre" maxlength="55" placeholder="varchar(55)">
+                </div>
+                <div class="campo">
+                    <label for="apellidos">Apellidos:</label>
+                    <input type="text" id="apellidos" name="apellidos" maxlength="55" placeholder="varchar(55)">
+                </div>
+                <div class="campo">
+                    <label for="tel">Teléfono (TEL):</label>
+                    <input type="text" id="tel" name="tel" maxlength="10" placeholder="varchar(10)">
+                </div>
+                <div class="campo">
+                    <label for="sueldo">Sueldo:</label>
+                    <input type="number" id="sueldo" name="sueldo" step="0.01" placeholder="double">
+                </div>
+            </div>
+
+            <footer class="acciones-formulario">
+                <button type="button" onclick="registrar()" class="btn-primario">Registrar</button>
+                <button type="button" onclick="consultar()" class="btn-secundario">Consultar</button>
+                <button type="button" onclick="modificar()" class="btn-alerta">Modificar</button>
+                <button type="button" onclick="eliminar()" class="btn-peligro">Eliminar</button>
+                <button type="button" onclick="limpiar()" class="btn-limpiar">Limpiar</button>
+            </footer>
+        </form>
+
+        <p class="pie-pagina">Easy Pizza - UPVM ITDI 2026</p>
+    </section>
+
+    <script>
+    // URL base que coincide con el prefijo en server.js
     const API_URL = "/api/repartidores";
 
     function getFormData() {
         return {
-            // id_pizzeria suele ser 1 por defecto en tu base de datos
-            id_pizzeria: document.getElementById('id_pizzeria').value || 1,
+            // El ID no se envía en el body para registros nuevos (es AI)
+            id_pizzeria: document.getElementById('id_pizzeria').value,
             nombre: document.getElementById('nombre').value,
             apellidos: document.getElementById('apellidos').value,
             tel: document.getElementById('tel').value,
@@ -13,32 +68,30 @@
         };
     }
 
-    // REGISTRAR (POST) - Misma lógica que tu login
     async function registrar() {
         const data = getFormData();
         try {
+            // CORRECCIÓN: Usar API_URL directamente para POST
             const res = await fetch(API_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data)
             });
             const result = await res.json();
-            alert(result.message || "Operación finalizada");
-            if (res.ok) limpiar();
-        } catch (err) { 
-            alert("Error de conexión con el servidor"); 
-        }
+            alert(result.message || "Operación realizada");
+            if(res.ok) limpiar();
+        } catch (err) { alert("Error de conexión"); }
     }
 
-    // CONSULTAR (GET con ID)
     async function consultar() {
         const id = document.getElementById('id_repartidor').value;
-        if (!id) return alert("Ingresa el ID para buscar");
+        if(!id) return alert("Ingresa el ID para buscar");
         try {
+            // CORRECCIÓN: La ruta final debe ser /api/repartidores/:id
             const res = await fetch(`${API_URL}/${id}`);
             const d = await res.json();
             
-            if (res.ok && d) {
+            if(res.ok && d) {
                 document.getElementById('id_pizzeria').value = d.id_pizzeria;
                 document.getElementById('nombre').value = d.nombre;
                 document.getElementById('apellidos').value = d.apellidos;
@@ -47,49 +100,43 @@
             } else { 
                 alert("Repartidor no encontrado"); 
             }
-        } catch (err) { 
-            alert("Error al consultar"); 
-        }
+        } catch (err) { alert("Error al consultar"); }
     }
 
-    // MODIFICAR (PUT)
     async function modificar() {
         const id = document.getElementById('id_repartidor').value;
-        if (!id) return alert("ID necesario para modificar");
+        if(!id) return alert("ID necesario para modificar");
         
         const data = getFormData();
         try {
+            // CORRECCIÓN: Ruta /api/repartidores/:id con método PUT
             const res = await fetch(`${API_URL}/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data)
             });
             const result = await res.json();
             alert(result.message || "Datos actualizados");
-        } catch (err) { 
-            alert("Error al modificar"); 
-        }
+        } catch (err) { alert("Error al modificar"); }
     }
 
-    // ELIMINAR (DELETE)
     async function eliminar() {
         const id = document.getElementById('id_repartidor').value;
-        if (!id) return alert("ID necesario");
-        if (!confirm("¿Seguro que deseas eliminarlo?")) return;
+        if(!id) return alert("ID necesario");
+        if(!confirm("¿Seguro que deseas eliminarlo?")) return;
         
         try {
-            const res = await fetch(`${API_URL}/${id}`, { 
-                method: 'DELETE' 
-            });
+            // CORRECCIÓN: Ruta /api/repartidores/:id con método DELETE
+            const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
             const result = await res.json();
             alert(result.message || "Eliminado");
             limpiar();
-        } catch (err) { 
-            alert("Error al eliminar"); 
-        }
+        } catch (err) { alert("Error al eliminar"); }
     }
 
     function limpiar() {
         document.getElementById('form-repartidores').reset();
     }
 </script>
+</body>
+</html>
