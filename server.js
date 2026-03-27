@@ -6,41 +6,54 @@ const cors = require('cors');
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// --- 1. CONFIGURACIÓN DE ARCHIVOS ESTÁTICOS ---
+// Verifica que tus carpetas en GitHub sean: src/public/index.html
 app.use(express.static(path.join(__dirname, 'src', 'public')));
 
-// --- CONFIGURACIÓN DE BASE DE DATOS PARA LA NUBE ---
-// Cuando subas a Railway, ellos te darán estos datos.
+// --- 2. CONFIGURACIÓN DE BASE DE DATOS (OPTIMIZADA PARA RAILWAY) ---
 const db = mysql.createConnection({
     host: process.env.MYSQLHOST || 'localhost',
     user: process.env.MYSQLUSER || 'root',
     password: process.env.MYSQLPASSWORD || '', 
-    database: process.env.MYSQLDATABASE || 'pizzas',
-    port: process.env.MYSQLPORT || 3306
+    database: process.env.MYSQL_DATABASE || process.env.MYSQLDATABASE || 'pizzas',
+    port: process.env.MYSQLPORT || 3306,
+    // Ayuda a mantener la conexión activa en la nube
+    connectTimeout: 10000 
 });
 
 db.connect(err => {
-    if (err) return console.error('❌ Error de conexión:', err.message);
+    if (err) {
+        console.error('❌ Error de conexión a la base de datos:', err.message);
+        return;
+    }
     console.log('✅ Base de datos conectada correctamente');
 });
 
-// --- RUTA PRINCIPAL ---
+// --- 3. RUTAS PRINCIPALES ---
+// Esto resuelve el error "Not Found" al entrar a la URL principal
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'src', 'public', 'index.html'));
 });
 
-// --- LOGIN ---
-app.post('/login', (req, res) => {
+// Ruta para el login si el archivo se llama login.html
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'src', 'public', 'login.html'));
+});
+
+// --- 4. API (LOGIN Y CRUD) ---
+app.post('/api/login', (req, res) => {
     const { correo, password } = req.body;
     const sql = 'SELECT * FROM pizzerias WHERE correo_admin = ? AND password_hash = ?';
     db.query(sql, [correo, password], (err, results) => {
         if (err) return res.status(500).json({ error: "Error en el servidor" });
-        if (results.length > 0) res.json({ success: true });
+        if (results.length > 0) res.json({ success: true, user: results[0].correo_admin });
         else res.status(401).json({ success: false, error: "Credenciales incorrectas" });
     });
 });
 
-// --- REPARTIDORES ---
-app.get('/repartidores', (req, res) => {
+// Repartidores
+app.get('/api/repartidores', (req, res) => {
     const sql = "SELECT id_repartidor, nombre, apellidos, tel, sueldo FROM repartidores";
     db.query(sql, (err, results) => {
         if (err) return res.status(500).json(err);
@@ -48,17 +61,17 @@ app.get('/repartidores', (req, res) => {
     });
 });
 
-app.post('/repartidores', (req, res) => {
-    const { id_repartidor, id_pizzeria, nombre, apellidos, tel, sueldo } = req.body;
-    const sql = 'INSERT INTO repartidores (id_repartidor, id_pizzeria, nombre, apellidos, tel, sueldo) VALUES (?, ?, ?, ?, ?, ?)';
-    db.query(sql, [id_repartidor, id_pizzeria, nombre, apellidos, tel, sueldo], (err) => {
+app.post('/api/repartidores', (req, res) => {
+    const { id_pizzeria, nombre, apellidos, tel, sueldo } = req.body;
+    const sql = 'INSERT INTO repartidores (id_pizzeria, nombre, apellidos, tel, sueldo) VALUES (?, ?, ?, ?, ?)';
+    db.query(sql, [id_pizzeria || 1, nombre, apellidos, tel, sueldo], (err) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ message: 'Repartidor guardado exitosamente' });
     });
 });
 
-// --- CLIENTES ---
-app.get('/clientes', (req, res) => {
+// Clientes
+app.get('/api/clientes', (req, res) => {
     const sql = "SELECT id_cliente, nombre_completo, direccion, telefono FROM clientes";
     db.query(sql, (err, results) => {
         if (err) return res.status(500).json(err);
@@ -66,17 +79,17 @@ app.get('/clientes', (req, res) => {
     });
 });
 
-app.post('/clientes', (req, res) => {
-    const { id_cliente, id_pizzeria, nombre_completo, direccion, telefono } = req.body;
-    const sql = 'INSERT INTO clientes (id_cliente, id_pizzeria, nombre_completo, direccion, telefono) VALUES (?, ?, ?, ?, ?)';
-    db.query(sql, [id_cliente, id_pizzeria, nombre_completo, direccion, telefono], (err) => {
+app.post('/api/clientes', (req, res) => {
+    const { id_pizzeria, nombre_completo, direccion, telefono } = req.body;
+    const sql = 'INSERT INTO clientes (id_pizzeria, nombre_completo, direccion, telefono) VALUES (?, ?, ?, ?)';
+    db.query(sql, [id_pizzeria || 1, nombre_completo, direccion, telefono], (err) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ message: 'Cliente guardado exitosamente' });
     });
 });
 
-// --- PEDIDOS (VENTAS Y CONSULTAS) ---
-app.get('/pedidos', (req, res) => {
+// Pedidos
+app.get('/api/pedidos', (req, res) => {
     const fecha = req.query.fecha;
     let sql = `
         SELECT 
@@ -100,36 +113,19 @@ app.get('/pedidos', (req, res) => {
     });
 });
 
-app.post('/pedidos', (req, res) => {
-    const { id_pedido, id_pizzeria, id_cliente, id_repartidor, total, detalles } = req.body;
+app.post('/api/pedidos', (req, res) => {
+    const { id_pizzeria, id_cliente, id_repartidor, total, detalles } = req.body;
     const fecha = new Date().toISOString().split('T')[0];
-    const sql = 'INSERT INTO pedidos (id_pedido, id_pizzeria, id_cliente, id_repartidor, detalles, total, fecha) VALUES (?, ?, ?, ?, ?, ?, ?)';
+    const sql = 'INSERT INTO pedidos (id_pizzeria, id_cliente, id_repartidor, detalles, total, fecha) VALUES (?, ?, ?, ?, ?, ?)';
     
-    db.query(sql, [id_pedido, id_pizzeria, id_cliente, id_repartidor, detalles, total, fecha], (err) => {
+    db.query(sql, [id_pizzeria || 1, id_cliente, id_repartidor, detalles, total, fecha], (err) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ message: 'Venta registrada con éxito' });
     });
 });
 
-app.get('/pedidos/:id', (req, res) => {
-    const sql = 'SELECT * FROM pedidos WHERE id_pedido = ?';
-    db.query(sql, [req.params.id], (err, result) => {
-        if (err) return res.status(500).json({ error: err.message });
-        if (result.length > 0) res.json(result[0]); 
-        else res.status(404).json({ error: "No encontrado" });
-    });
-});
-
-app.delete('/pedidos/:id', (req, res) => {
-    const sql = 'DELETE FROM pedidos WHERE id_pedido = ?';
-    db.query(sql, [req.params.id], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: 'Pedido eliminado correctamente' });
-    });
-});
-
-// --- BONOS ---
-app.get('/bonos/consulta/:id', (req, res) => {
+// Bonos
+app.get('/api/bonos/consulta/:id', (req, res) => {
     const id_repartidor = req.params.id;
     const sql = `
         SELECT 
@@ -156,8 +152,9 @@ app.get('/bonos/consulta/:id', (req, res) => {
     });
 });
 
-// --- PUERTO DINÁMICO ---
+// --- 5. PUERTO DINÁMICO PARA RAILWAY ---
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`🚀 Servidor activo en puerto: ${PORT}`);
+// Escuchar en 0.0.0.0 es obligatorio para despliegues en la nube
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Servidor de Easy Pizza activo en: http://0.0.0.0:${PORT}`);
 });
