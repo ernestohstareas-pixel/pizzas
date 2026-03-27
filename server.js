@@ -8,8 +8,8 @@ app.use(cors());
 app.use(express.json());
 
 // --- 1. CONFIGURACIÓN DE ARCHIVOS ESTÁTICOS ---
-// Verifica que tus carpetas en GitHub sean: src/public/index.html
-app.use(express.static(path.join(__dirname, 'src', 'public')));
+// Se configura para buscar la carpeta 'public' en la raíz del proyecto
+app.use(express.static(path.join(__dirname, 'public')));
 
 // --- 2. CONFIGURACIÓN DE BASE DE DATOS (OPTIMIZADA PARA RAILWAY) ---
 const db = mysql.createConnection({
@@ -18,7 +18,6 @@ const db = mysql.createConnection({
     password: process.env.MYSQLPASSWORD || '', 
     database: process.env.MYSQL_DATABASE || process.env.MYSQLDATABASE || 'pizzas',
     port: process.env.MYSQLPORT || 3306,
-    // Ayuda a mantener la conexión activa en la nube
     connectTimeout: 10000 
 });
 
@@ -30,18 +29,20 @@ db.connect(err => {
     console.log('✅ Base de datos conectada correctamente');
 });
 
-// --- 3. RUTAS PRINCIPALES ---
-// Esto resuelve el error "Not Found" al entrar a la URL principal
+// --- 3. RUTAS DE NAVEGACIÓN (FRONTEND) ---
+// Ruta principal: Carga el archivo index.html
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Ruta para el login si el archivo se llama login.html
+// Ruta de login: Carga el archivo login.html
 app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'public', 'login.html'));
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// --- 4. API (LOGIN Y CRUD) ---
+// --- 4. API (BACKEND - LOGIN Y CRUD) ---
+
+// Login de usuarios
 app.post('/api/login', (req, res) => {
     const { correo, password } = req.body;
     const sql = 'SELECT * FROM pizzerias WHERE correo_admin = ? AND password_hash = ?';
@@ -52,7 +53,7 @@ app.post('/api/login', (req, res) => {
     });
 });
 
-// Repartidores
+// Gestión de Repartidores
 app.get('/api/repartidores', (req, res) => {
     const sql = "SELECT id_repartidor, nombre, apellidos, tel, sueldo FROM repartidores";
     db.query(sql, (err, results) => {
@@ -70,7 +71,7 @@ app.post('/api/repartidores', (req, res) => {
     });
 });
 
-// Clientes
+// Gestión de Clientes
 app.get('/api/clientes', (req, res) => {
     const sql = "SELECT id_cliente, nombre_completo, direccion, telefono FROM clientes";
     db.query(sql, (err, results) => {
@@ -88,7 +89,7 @@ app.post('/api/clientes', (req, res) => {
     });
 });
 
-// Pedidos
+// Gestión de Pedidos
 app.get('/api/pedidos', (req, res) => {
     const fecha = req.query.fecha;
     let sql = `
@@ -124,7 +125,7 @@ app.post('/api/pedidos', (req, res) => {
     });
 });
 
-// Bonos
+// Consulta de Bonos para Repartidores
 app.get('/api/bonos/consulta/:id', (req, res) => {
     const id_repartidor = req.params.id;
     const sql = `
@@ -152,9 +153,8 @@ app.get('/api/bonos/consulta/:id', (req, res) => {
     });
 });
 
-// --- 5. PUERTO DINÁMICO PARA RAILWAY ---
+// --- 5. INICIO DEL SERVIDOR ---
 const PORT = process.env.PORT || 5000;
-// Escuchar en 0.0.0.0 es obligatorio para despliegues en la nube
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Servidor de Easy Pizza activo en: http://0.0.0.0:${PORT}`);
+    console.log(`🚀 Servidor de Easy Pizza activo en puerto: ${PORT}`);
 });
